@@ -1,0 +1,37 @@
+{
+  "fetchedAt": "2026-09-01T18:36:09.821Z",
+  "premiumYear": 2026,
+  "marketShareYear": 2024,
+  "deductiblesByAgeClass": {
+    "KIN": [
+      0,
+      100,
+      200,
+      300,
+      400,
+      500,
+      600
+    ],
+    "JUG": [
+      300,
+      500,
+      1000,
+      1500,
+      2000,
+      2500
+    ],
+    "ERW": [
+      300,
+      500,
+      1000,
+      1500,
+      2000,
+      2500
+    ]
+  },
+  "sources": {
+    "premiums": "https://opendata.swiss/en/dataset/health-insurance-premiums",
+    "insurerRegistry": "https://www.bag.admin.ch/de/verzeichnisse-der-zugelassenen-kranken-und-rueckversicherer",
+    "premiumRegions": "https://www.priminfo.admin.ch/downloads/praemienregionen.xlsx"
+  }
+}

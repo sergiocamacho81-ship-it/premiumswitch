@@ -31,6 +31,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# switch-request submissions contain real user PII — never commit
+/documents
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
