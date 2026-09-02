@@ -1,0 +1,84 @@
+{
+  "languages": { "de": "Deutsch", "fr": "Français", "it": "Italiano", "en": "English" },
+  "meta": {
+    "title": "PremiumSwitch — Trouvez votre assurance maladie la moins chère",
+    "description": "Comparez les données officielles des primes de toutes les caisses maladie suisses et trouvez votre assurance de base la moins chère en 60 secondes."
+  },
+  "hero": {
+    "eyebrow": "Données officielles Priminfo · {year}",
+    "title": "Trouvez votre assurance maladie la moins chère en 60 secondes",
+    "subtitle": "Comparez toutes les caisses maladie suisses à l''aide des données officielles de la Confédération. Pas de spam, pas d''appels commerciaux — juste les chiffres."
+  },
+  "footer": {
+    "text": "Données de primes fournies par l''<link>Office fédéral de la santé publique (OFSP)</link>. PremiumSwitch n''est affilié à aucun assureur."
+  },
+  "form": {
+    "cardTitle": "Comparer votre prime",
+    "postcode": "NPA",
+    "birthYear": "Année de naissance",
+    "currentPremium": "Prime actuelle (CHF/mois)",
+    "currentPremiumPlaceholder": "Facultatif",
+    "deductible": "Franchise (CHF)",
+    "deductibleOption": "CHF {amount}",
+    "submit": "Comparer maintenant",
+    "submitting": "Comparaison...",
+    "ambiguousPostcode": "Votre NPA couvre plusieurs régions de primes — ces prix utilisent la région la plus courante. Pour une offre exacte, veuillez confirmer votre commune de domicile.",
+    "noResults": "Aucune offre trouvée pour cette combinaison. Essayez une autre franchise."
+  },
+  "badges": {
+    "cheapest": "Le moins cher",
+    "bestValue": "Meilleur rapport qualité-prix",
+    "mostPopular": "Le plus populaire"
+  },
+  "results": {
+    "save": "Économisez CHF {monthly}/mois · CHF {yearly}/an",
+    "perMonth": "par mois"
+  },
+  "cta": {
+    "title": "Prêt à changer et à économiser ?",
+    "subtitle": "Nous nous chargeons de la lettre de résiliation et de la nouvelle demande.",
+    "button": "Changer pour moi — CHF 49 unique"
+  },
+  "switchForm": {
+    "switchTo": "Changer pour",
+    "insurerOption": "{name} — CHF {premium}/mois",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "birthDate": "Date de naissance",
+    "street": "Rue et numéro",
+    "postcode": "NPA",
+    "city": "Localité",
+    "email": "E-mail",
+    "phone": "Téléphone (facultatif)",
+    "currentInsurer": "Assureur actuel",
+    "currentInsurerPlaceholder": "Sélectionnez votre assureur actuel",
+    "cancel": "Annuler",
+    "submit": "Envoyer ma demande de changement",
+    "submitting": "Envoi en cours..."
+  },
+  "switchSuccess": {
+    "title": "Demande reçue",
+    "body": "Nous avons préparé votre lettre de résiliation (effective au {deadline}) et votre nouvelle demande pour {insurer} (début le {effective}). Aucun paiement n''a encore été effectué — notre équipe vous contactera à {email} pour confirmer les détails et convenir des CHF 49 avant tout envoi aux assureurs.",
+    "downloadLetter": "Lettre de résiliation",
+    "downloadSummary": "Résumé de la demande",
+    "previewLetter": "Aperçu de la lettre de résiliation"
+  },
+  "errors": {
+    "postcodeInvalid": "Saisissez un NPA suisse valide (1000–9999).",
+    "postcodeNotFound": "Ce NPA ne figure pas dans les données officielles des régions de primes.",
+    "birthYearInvalid": "Saisissez une année de naissance valide.",
+    "deductibleRequired": "Choisissez une franchise.",
+    "deductibleInvalidOptions": "Choisissez une franchise valable pour cette tranche d''âge : {options}.",
+    "invalidBody": "Requête invalide.",
+    "tooLarge": "Requête trop volumineuse.",
+    "tooManyRequests": "Trop de requêtes. Veuillez réessayer plus tard.",
+    "required": "Ce champ est obligatoire.",
+    "maxLength": "Doit comporter au maximum {max} caractères.",
+    "invalidDate": "Saisissez une date valide.",
+    "invalidEmail": "Saisissez une adresse e-mail valide.",
+    "invalidSwissPostcode": "Saisissez un NPA suisse valide.",
+    "missingPremium": "Impossible de déterminer le plan sélectionné.",
+    "invalidDeductible": "Franchise invalide.",
+    "generic": "Une erreur s''est produite. Veuillez réessayer."
+  }
+}

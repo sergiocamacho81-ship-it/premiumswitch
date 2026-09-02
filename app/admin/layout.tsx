@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import "./globals.css";
+import "../globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  title: "PremiumSwitch — Find your cheapest Swiss health insurance",
-  description:
-    "Compare official Priminfo premium data across all Swiss insurers and find your cheapest health insurance in 60 seconds.",
+  title: "PremiumSwitch Admin",
+  description: "Internal submissions dashboard.",
+  robots: { index: false, follow: false },
 };
 
-export default function RootLayout({
+export default function AdminLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;

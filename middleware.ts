@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import createIntlMiddleware from "next-intl/middleware";
+import { routing } from "@/i18n/routing";
 import { isRateLimited, checkRateLimit, getClientIp } from "@/lib/rateLimit";
 
 const MAX_FAILED_ATTEMPTS = 10;
 const LOCKOUT_WINDOW_SECONDS = 15 * 60;
+
+const intlMiddleware = createIntlMiddleware(routing);
 
 // Plain === on secrets leaks timing information (it returns as soon as the
 // first mismatched character is found), letting an attacker recover a
@@ -17,7 +21,7 @@ function timingSafeEqual(a: string, b: string): boolean {
   return mismatch === 0;
 }
 
-export async function middleware(request: NextRequest) {
+async function adminAuthMiddleware(request: NextRequest): Promise<NextResponse> {
   const user = process.env.ADMIN_USER;
   const password = process.env.ADMIN_PASSWORD;
 
@@ -58,6 +62,18 @@ export async function middleware(request: NextRequest) {
   });
 }
 
+export default async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // The admin tool is an internal operator dashboard, not (yet) localized —
+  // it keeps its own Basic Auth gate instead of going through locale routing.
+  if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
+    return adminAuthMiddleware(request);
+  }
+
+  return intlMiddleware(request);
+}
+
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*"],
+  matcher: ["/api/admin/:path*", "/((?!api|_next|_vercel|.*\\..*).*)"],
 };

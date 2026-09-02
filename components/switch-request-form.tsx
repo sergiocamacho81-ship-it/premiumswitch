@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Loader2, Download, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,10 +16,12 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import insurers from "@/data/insurers.json";
 import type { InsurerOption } from "@/lib/priminfo";
+import type { SwitchRequestErrorCode } from "@/lib/switchRequest";
 
 type Props = {
   options: InsurerOption[];
   deductible: number;
+  locale: string;
   onCancel: () => void;
 };
 
@@ -27,6 +30,15 @@ type SubmitResult = {
   applicationSummary: string;
   cancellationDeadline: string;
   effectiveDate: string;
+};
+
+type ApiError = { field: string; code: SwitchRequestErrorCode; params?: Record<string, string> };
+
+const DATE_LOCALE: Record<string, string> = {
+  de: "de-CH",
+  fr: "fr-CH",
+  it: "it-CH",
+  en: "en-GB",
 };
 
 const insurerNames = Object.values(insurers as Record<string, { name: string }>)
@@ -43,7 +55,8 @@ function downloadText(filename: string, content: string) {
   URL.revokeObjectURL(url);
 }
 
-export function SwitchRequestForm({ options, deductible, onCancel }: Props) {
+export function SwitchRequestForm({ options, deductible, locale, onCancel }: Props) {
+  const t = useTranslations();
   const [newInsurerName, setNewInsurerName] = useState(
     options[0]?.insurerName ?? ""
   );
@@ -56,12 +69,16 @@ export function SwitchRequestForm({ options, deductible, onCancel }: Props) {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [currentInsurerName, setCurrentInsurerName] = useState("");
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [fieldErrors, setFieldErrors] = useState<Record<string, ApiError>>({});
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<SubmitResult | null>(null);
 
   const selectedOption = options.find((o) => o.insurerName === newInsurerName);
+
+  function errorText(err: ApiError): string {
+    return t(`errors.${err.code}`, err.params);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -86,25 +103,24 @@ export function SwitchRequestForm({ options, deductible, onCancel }: Props) {
           newInsurerName,
           premium: selectedOption?.premium,
           deductible,
+          locale,
         }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        const errors: Record<string, string> = {};
-        (data.errors as Array<{ field: string; message: string }>).forEach(
-          (err) => {
-            errors[err.field] = err.message;
-          }
-        );
+        const errors: Record<string, ApiError> = {};
+        (data.errors as ApiError[]).forEach((err) => {
+          errors[err.field] = err;
+        });
         setFieldErrors(errors);
         return;
       }
 
       setResult(data as SubmitResult);
     } catch {
-      setGeneralError("Something went wrong. Please try again.");
+      setGeneralError(t("errors.generic"));
     } finally {
       setLoading(false);
     }
@@ -117,25 +133,27 @@ export function SwitchRequestForm({ options, deductible, onCancel }: Props) {
       year: "numeric",
       timeZone: "UTC",
     };
+    const dateLocale = DATE_LOCALE[locale] ?? "en-GB";
     const deadline = new Date(result.cancellationDeadline).toLocaleDateString(
-      "en-GB",
+      dateLocale,
       dateOpts
     );
     const effective = new Date(result.effectiveDate).toLocaleDateString(
-      "en-GB",
+      dateLocale,
       dateOpts
     );
 
     return (
       <div className="space-y-4 text-center">
         <CheckCircle2 className="mx-auto h-10 w-10 text-green-600 dark:text-green-500" />
-        <h3 className="text-lg font-semibold">Request received</h3>
+        <h3 className="text-lg font-semibold">{t("switchSuccess.title")}</h3>
         <p className="text-sm text-muted-foreground">
-          We&apos;ve drafted your cancellation letter (effective {deadline})
-          and your new application for {newInsurerName} (starting {effective}).
-          No payment has been taken yet — our team will contact you at{" "}
-          {email} to confirm details and arrange the CHF 49 fee before
-          anything is sent to insurers.
+          {t("switchSuccess.body", {
+            deadline,
+            insurer: newInsurerName,
+            effective,
+            email,
+          })}
         </p>
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
           <Button
@@ -144,7 +162,7 @@ export function SwitchRequestForm({ options, deductible, onCancel }: Props) {
               downloadText("cancellation-letter.txt", result.cancellationLetter)
             }
           >
-            <Download /> Cancellation letter
+            <Download /> {t("switchSuccess.downloadLetter")}
           </Button>
           <Button
             variant="outline"
@@ -152,12 +170,12 @@ export function SwitchRequestForm({ options, deductible, onCancel }: Props) {
               downloadText("application-summary.txt", result.applicationSummary)
             }
           >
-            <Download /> Application summary
+            <Download /> {t("switchSuccess.downloadSummary")}
           </Button>
         </div>
         <details className="text-left text-sm">
           <summary className="cursor-pointer text-muted-foreground">
-            Preview cancellation letter
+            {t("switchSuccess.previewLetter")}
           </summary>
           <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap rounded-md border bg-muted p-3 text-xs">
             {result.cancellationLetter}
@@ -170,7 +188,7 @@ export function SwitchRequestForm({ options, deductible, onCancel }: Props) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4 text-left">
       <div className="space-y-2">
-        <Label htmlFor="newInsurer">Switch to</Label>
+        <Label htmlFor="newInsurer">{t("switchForm.switchTo")}</Label>
         <Select value={newInsurerName} onValueChange={setNewInsurerName}>
           <SelectTrigger id="newInsurer">
             <SelectValue />
@@ -178,7 +196,10 @@ export function SwitchRequestForm({ options, deductible, onCancel }: Props) {
           <SelectContent>
             {options.map((o) => (
               <SelectItem key={o.insurerCode} value={o.insurerName}>
-                {o.insurerName} — CHF {o.premium}/mo
+                {t("switchForm.insurerOption", {
+                  name: o.insurerName,
+                  premium: o.premium,
+                })}
               </SelectItem>
             ))}
           </SelectContent>
@@ -187,7 +208,7 @@ export function SwitchRequestForm({ options, deductible, onCancel }: Props) {
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="firstName">First name</Label>
+          <Label htmlFor="firstName">{t("switchForm.firstName")}</Label>
           <Input
             id="firstName"
             value={firstName}
@@ -195,11 +216,13 @@ export function SwitchRequestForm({ options, deductible, onCancel }: Props) {
             required
           />
           {fieldErrors.firstName && (
-            <p className="text-sm text-destructive">{fieldErrors.firstName}</p>
+            <p className="text-sm text-destructive">
+              {errorText(fieldErrors.firstName)}
+            </p>
           )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="lastName">Last name</Label>
+          <Label htmlFor="lastName">{t("switchForm.lastName")}</Label>
           <Input
             id="lastName"
             value={lastName}
@@ -207,13 +230,15 @@ export function SwitchRequestForm({ options, deductible, onCancel }: Props) {
             required
           />
           {fieldErrors.lastName && (
-            <p className="text-sm text-destructive">{fieldErrors.lastName}</p>
+            <p className="text-sm text-destructive">
+              {errorText(fieldErrors.lastName)}
+            </p>
           )}
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="birthDate">Date of birth</Label>
+        <Label htmlFor="birthDate">{t("switchForm.birthDate")}</Label>
         <Input
           id="birthDate"
           type="date"
@@ -222,12 +247,14 @@ export function SwitchRequestForm({ options, deductible, onCancel }: Props) {
           required
         />
         {fieldErrors.birthDate && (
-          <p className="text-sm text-destructive">{fieldErrors.birthDate}</p>
+          <p className="text-sm text-destructive">
+            {errorText(fieldErrors.birthDate)}
+          </p>
         )}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="street">Street and number</Label>
+        <Label htmlFor="street">{t("switchForm.street")}</Label>
         <Input
           id="street"
           value={street}
@@ -235,13 +262,15 @@ export function SwitchRequestForm({ options, deductible, onCancel }: Props) {
           required
         />
         {fieldErrors.street && (
-          <p className="text-sm text-destructive">{fieldErrors.street}</p>
+          <p className="text-sm text-destructive">
+            {errorText(fieldErrors.street)}
+          </p>
         )}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="switchPostcode">Postcode</Label>
+          <Label htmlFor="switchPostcode">{t("switchForm.postcode")}</Label>
           <Input
             id="switchPostcode"
             inputMode="numeric"
@@ -251,11 +280,13 @@ export function SwitchRequestForm({ options, deductible, onCancel }: Props) {
             required
           />
           {fieldErrors.postcode && (
-            <p className="text-sm text-destructive">{fieldErrors.postcode}</p>
+            <p className="text-sm text-destructive">
+              {errorText(fieldErrors.postcode)}
+            </p>
           )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="city">City</Label>
+          <Label htmlFor="city">{t("switchForm.city")}</Label>
           <Input
             id="city"
             value={city}
@@ -263,14 +294,16 @@ export function SwitchRequestForm({ options, deductible, onCancel }: Props) {
             required
           />
           {fieldErrors.city && (
-            <p className="text-sm text-destructive">{fieldErrors.city}</p>
+            <p className="text-sm text-destructive">
+              {errorText(fieldErrors.city)}
+            </p>
           )}
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t("switchForm.email")}</Label>
           <Input
             id="email"
             type="email"
@@ -279,11 +312,13 @@ export function SwitchRequestForm({ options, deductible, onCancel }: Props) {
             required
           />
           {fieldErrors.email && (
-            <p className="text-sm text-destructive">{fieldErrors.email}</p>
+            <p className="text-sm text-destructive">
+              {errorText(fieldErrors.email)}
+            </p>
           )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="phone">Phone (optional)</Label>
+          <Label htmlFor="phone">{t("switchForm.phone")}</Label>
           <Input
             id="phone"
             type="tel"
@@ -294,13 +329,13 @@ export function SwitchRequestForm({ options, deductible, onCancel }: Props) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="currentInsurer">Current insurer</Label>
+        <Label htmlFor="currentInsurer">{t("switchForm.currentInsurer")}</Label>
         <Select
           value={currentInsurerName}
           onValueChange={setCurrentInsurerName}
         >
           <SelectTrigger id="currentInsurer">
-            <SelectValue placeholder="Select your current insurer" />
+            <SelectValue placeholder={t("switchForm.currentInsurerPlaceholder")} />
           </SelectTrigger>
           <SelectContent>
             {insurerNames.map((name) => (
@@ -312,7 +347,7 @@ export function SwitchRequestForm({ options, deductible, onCancel }: Props) {
         </Select>
         {fieldErrors.currentInsurerName && (
           <p className="text-sm text-destructive">
-            {fieldErrors.currentInsurerName}
+            {errorText(fieldErrors.currentInsurerName)}
           </p>
         )}
       </div>
@@ -325,15 +360,15 @@ export function SwitchRequestForm({ options, deductible, onCancel }: Props) {
 
       <div className="flex gap-2">
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
-          Cancel
+          {t("switchForm.cancel")}
         </Button>
         <Button type="submit" disabled={loading} className="flex-1">
           {loading ? (
             <>
-              <Loader2 className="animate-spin" /> Sending...
+              <Loader2 className="animate-spin" /> {t("switchForm.submitting")}
             </>
           ) : (
-            "Send my switch request"
+            t("switchForm.submit")
           )}
         </Button>
       </div>

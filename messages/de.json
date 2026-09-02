@@ -1,0 +1,84 @@
+{
+  "languages": { "de": "Deutsch", "fr": "Français", "it": "Italiano", "en": "English" },
+  "meta": {
+    "title": "PremiumSwitch — Finden Sie Ihre günstigste Krankenkasse",
+    "description": "Vergleichen Sie die offiziellen Prämiendaten aller Schweizer Krankenkassen und finden Sie in 60 Sekunden Ihre günstigste Grundversicherung."
+  },
+  "hero": {
+    "eyebrow": "Offizielle Priminfo-Daten · {year}",
+    "title": "Finden Sie Ihre günstigste Krankenkasse in 60 Sekunden",
+    "subtitle": "Vergleichen Sie alle Schweizer Krankenkassen anhand offizieller Prämiendaten des Bundes. Kein Spam, keine Verkaufsanrufe — nur die Zahlen."
+  },
+  "footer": {
+    "text": "Prämiendaten vom <link>Bundesamt für Gesundheit (BAG)</link>. PremiumSwitch ist mit keiner Krankenkasse verbunden."
+  },
+  "form": {
+    "cardTitle": "Prämie vergleichen",
+    "postcode": "Postleitzahl",
+    "birthYear": "Geburtsjahr",
+    "currentPremium": "Aktuelle Prämie (CHF/Mt.)",
+    "currentPremiumPlaceholder": "Optional",
+    "deductible": "Franchise (CHF)",
+    "deductibleOption": "CHF {amount}",
+    "submit": "Jetzt vergleichen",
+    "submitting": "Vergleiche...",
+    "ambiguousPostcode": "Ihre Postleitzahl umfasst mehrere Prämienregionen — diese Preise basieren auf der häufigsten Region. Für eine genaue Offerte bestätigen Sie bitte Ihre Wohngemeinde.",
+    "noResults": "Für diese Kombination wurden keine Angebote gefunden. Versuchen Sie eine andere Franchise."
+  },
+  "badges": {
+    "cheapest": "Günstigste",
+    "bestValue": "Bestes Preis-Leistungs-Verhältnis",
+    "mostPopular": "Am beliebtesten"
+  },
+  "results": {
+    "save": "Sparen Sie CHF {monthly}/Mt. · CHF {yearly}/Jahr",
+    "perMonth": "pro Monat"
+  },
+  "cta": {
+    "title": "Bereit zu wechseln und zu sparen?",
+    "subtitle": "Wir kümmern uns um das Kündigungsschreiben und den neuen Antrag.",
+    "button": "Für mich wechseln — CHF 49 einmalig"
+  },
+  "switchForm": {
+    "switchTo": "Wechseln zu",
+    "insurerOption": "{name} — CHF {premium}/Mt.",
+    "firstName": "Vorname",
+    "lastName": "Nachname",
+    "birthDate": "Geburtsdatum",
+    "street": "Strasse und Hausnummer",
+    "postcode": "Postleitzahl",
+    "city": "Ort",
+    "email": "E-Mail",
+    "phone": "Telefon (optional)",
+    "currentInsurer": "Aktuelle Krankenkasse",
+    "currentInsurerPlaceholder": "Wählen Sie Ihre aktuelle Krankenkasse",
+    "cancel": "Abbrechen",
+    "submit": "Wechselantrag senden",
+    "submitting": "Wird gesendet..."
+  },
+  "switchSuccess": {
+    "title": "Anfrage erhalten",
+    "body": "Wir haben Ihr Kündigungsschreiben (gültig per {deadline}) und Ihren neuen Antrag für {insurer} (Start {effective}) vorbereitet. Es wurde noch keine Zahlung vorgenommen — unser Team meldet sich bei {email}, um die Details zu bestätigen und die einmalige Gebühr von CHF 49 zu vereinbaren, bevor etwas an die Versicherer gesendet wird.",
+    "downloadLetter": "Kündigungsschreiben",
+    "downloadSummary": "Antragszusammenfassung",
+    "previewLetter": "Kündigungsschreiben ansehen"
+  },
+  "errors": {
+    "postcodeInvalid": "Geben Sie eine gültige Schweizer Postleitzahl ein (1000–9999).",
+    "postcodeNotFound": "Diese Postleitzahl ist nicht in den offiziellen Prämienregionsdaten enthalten.",
+    "birthYearInvalid": "Geben Sie ein gültiges Geburtsjahr ein.",
+    "deductibleRequired": "Wählen Sie eine Franchise.",
+    "deductibleInvalidOptions": "Wählen Sie eine gültige Franchise für diese Altersgruppe: {options}.",
+    "invalidBody": "Ungültige Anfrage.",
+    "tooLarge": "Anfrage zu gross.",
+    "tooManyRequests": "Zu viele Anfragen. Bitte versuchen Sie es später erneut.",
+    "required": "Dieses Feld ist erforderlich.",
+    "maxLength": "Darf höchstens {max} Zeichen lang sein.",
+    "invalidDate": "Geben Sie ein gültiges Datum ein.",
+    "invalidEmail": "Geben Sie eine gültige E-Mail-Adresse ein.",
+    "invalidSwissPostcode": "Geben Sie eine gültige Schweizer Postleitzahl ein.",
+    "missingPremium": "Der Plan konnte nicht ermittelt werden.",
+    "invalidDeductible": "Ungültige Franchise.",
+    "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+  }
+}

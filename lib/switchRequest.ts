@@ -1,3 +1,5 @@
+import type { AppLocale } from "@/i18n/routing";
+
 export type SwitchRequestInput = {
   firstName: string;
   lastName: string;
@@ -14,7 +16,20 @@ export type SwitchRequestInput = {
   deductible: number;
 };
 
-export type SwitchRequestError = { field: string; message: string };
+export type SwitchRequestErrorCode =
+  | "required"
+  | "maxLength"
+  | "invalidDate"
+  | "invalidEmail"
+  | "invalidSwissPostcode"
+  | "missingPremium"
+  | "invalidDeductible";
+
+export type SwitchRequestError = {
+  field: string;
+  code: SwitchRequestErrorCode;
+  params?: Record<string, string>;
+};
 
 const REQUIRED_FIELDS: Array<keyof SwitchRequestInput> = [
   "firstName",
@@ -50,7 +65,7 @@ export function validateSwitchRequest(
 
   for (const field of REQUIRED_FIELDS) {
     if (!input[field] || String(input[field]).trim() === "") {
-      errors.push({ field, message: "This field is required." });
+      errors.push({ field, code: "required" });
     }
   }
 
@@ -59,23 +74,20 @@ export function validateSwitchRequest(
   >) {
     const value = input[field];
     if (typeof value === "string" && value.length > maxLength) {
-      errors.push({ field, message: `Must be ${maxLength} characters or fewer.` });
+      errors.push({ field, code: "maxLength", params: { max: String(maxLength) } });
     }
   }
 
   if (input.birthDate && Number.isNaN(Date.parse(input.birthDate))) {
-    errors.push({ field: "birthDate", message: "Enter a valid date." });
+    errors.push({ field: "birthDate", code: "invalidDate" });
   }
 
   if (input.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.email)) {
-    errors.push({ field: "email", message: "Enter a valid email address." });
+    errors.push({ field: "email", code: "invalidEmail" });
   }
 
   if (input.postcode && !/^[1-9]\d{3}$/.test(input.postcode)) {
-    errors.push({
-      field: "postcode",
-      message: "Enter a valid Swiss postcode.",
-    });
+    errors.push({ field: "postcode", code: "invalidSwissPostcode" });
   }
 
   if (
@@ -84,14 +96,14 @@ export function validateSwitchRequest(
     input.premium <= 0 ||
     input.premium > 5000
   ) {
-    errors.push({ field: "premium", message: "Missing selected plan premium." });
+    errors.push({ field: "premium", code: "missingPremium" });
   }
 
   if (
     input.deductible != null &&
     (Number.isNaN(input.deductible) || input.deductible < 0 || input.deductible > 2500)
   ) {
-    errors.push({ field: "deductible", message: "Invalid deductible." });
+    errors.push({ field: "deductible", code: "invalidDeductible" });
   }
 
   return errors;
@@ -107,8 +119,15 @@ export function getSwitchDates(now = new Date()) {
   };
 }
 
-function formatDate(date: Date): string {
-  return date.toLocaleDateString("en-GB", {
+const DATE_LOCALE: Record<AppLocale, string> = {
+  de: "de-CH",
+  fr: "fr-CH",
+  it: "it-CH",
+  en: "en-GB",
+};
+
+function formatDate(date: Date, locale: AppLocale): string {
+  return date.toLocaleDateString(DATE_LOCALE[locale], {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -116,27 +135,125 @@ function formatDate(date: Date): string {
   });
 }
 
-export function generateCancellationLetter(
-  input: SwitchRequestInput,
-  now = new Date()
-): string {
-  const { cancellationDeadline } = getSwitchDates(now);
-  const fullName = `${input.firstName} ${input.lastName}`;
+type LetterFn = (input: SwitchRequestInput, now: Date) => string;
 
-  return `${fullName}
+const CANCELLATION_LETTERS: Record<AppLocale, LetterFn> = {
+  de: (input, now) => {
+    const { cancellationDeadline } = getSwitchDates(now);
+    const fullName = `${input.firstName} ${input.lastName}`;
+    return `${fullName}
+${input.street}
+${input.postcode} ${input.city}
+
+${input.currentInsurerName}
+[Adresse des Versicherers — bitte anhand der Policenunterlagen prüfen]
+
+${input.city}, ${formatDate(now, "de")}
+
+Betreff: Ordentliche Kündigung der obligatorischen Krankenpflegeversicherung (KVG)
+
+Sehr geehrte Damen und Herren
+
+Hiermit kündige ich meine obligatorische Krankenpflegeversicherung (KVG)${input.policyNumber ? `, Policennummer ${input.policyNumber},` : ""} ordentlich per 31. Dezember ${cancellationDeadline.getUTCFullYear()} gemäss Art. 7 KVG.
+
+Angaben zur versicherten Person:
+Name: ${fullName}
+Geburtsdatum: ${input.birthDate}
+Adresse: ${input.street}, ${input.postcode} ${input.city}
+
+Ich bitte Sie, mir die Kündigung schriftlich zu bestätigen.
+
+Freundliche Grüsse
+
+${fullName}
+(Unterschrift erforderlich bei postalischem Versand)
+
+---
+Erstellt von PremiumSwitch am ${formatDate(now, "de")}.`;
+  },
+  fr: (input, now) => {
+    const { cancellationDeadline } = getSwitchDates(now);
+    const fullName = `${input.firstName} ${input.lastName}`;
+    return `${fullName}
+${input.street}
+${input.postcode} ${input.city}
+
+${input.currentInsurerName}
+[Adresse de l'assureur — merci de vérifier sur vos documents de police]
+
+${input.city}, le ${formatDate(now, "fr")}
+
+Concerne : Résiliation ordinaire de l'assurance obligatoire des soins (LAMal)
+
+Madame, Monsieur,
+
+Par la présente, je résilie mon assurance obligatoire des soins (LAMal)${input.policyNumber ? `, numéro de police ${input.policyNumber},` : ""} de manière ordinaire pour le 31 décembre ${cancellationDeadline.getUTCFullYear()}, conformément à l'art. 7 LAMal.
+
+Coordonnées de l'assuré-e :
+Nom : ${fullName}
+Date de naissance : ${input.birthDate}
+Adresse : ${input.street}, ${input.postcode} ${input.city}
+
+Je vous prie de bien vouloir me confirmer cette résiliation par écrit.
+
+Meilleures salutations,
+
+${fullName}
+(Signature requise en cas d'envoi postal)
+
+---
+Préparé par PremiumSwitch le ${formatDate(now, "fr")}.`;
+  },
+  it: (input, now) => {
+    const { cancellationDeadline } = getSwitchDates(now);
+    const fullName = `${input.firstName} ${input.lastName}`;
+    return `${fullName}
+${input.street}
+${input.postcode} ${input.city}
+
+${input.currentInsurerName}
+[Indirizzo dell'assicuratore — verificare sui documenti di polizza]
+
+${input.city}, ${formatDate(now, "it")}
+
+Oggetto: Disdetta ordinaria dell'assicurazione obbligatoria delle cure medico-sanitarie (LAMal)
+
+Gentili Signore e Signori,
+
+Con la presente disdico la mia assicurazione obbligatoria delle cure medico-sanitarie (LAMal)${input.policyNumber ? `, numero di polizza ${input.policyNumber},` : ""} in via ordinaria per il 31 dicembre ${cancellationDeadline.getUTCFullYear()}, conformemente all'art. 7 LAMal.
+
+Dati dell'assicurato/a:
+Nome: ${fullName}
+Data di nascita: ${input.birthDate}
+Indirizzo: ${input.street}, ${input.postcode} ${input.city}
+
+Vi prego di confermarmi la disdetta per iscritto.
+
+Cordiali saluti,
+
+${fullName}
+(Firma richiesta in caso di invio postale)
+
+---
+Preparato da PremiumSwitch il ${formatDate(now, "it")}.`;
+  },
+  en: (input, now) => {
+    const { cancellationDeadline } = getSwitchDates(now);
+    const fullName = `${input.firstName} ${input.lastName}`;
+    return `${fullName}
 ${input.street}
 ${input.postcode} ${input.city}
 
 ${input.currentInsurerName}
 [Insurer mailing address — please verify against your policy documents]
 
-${input.city}, ${formatDate(now)}
+${input.city}, ${formatDate(now, "en")}
 
 Subject: Ordinary termination of compulsory health insurance (KVG/LAMal)
 
 Dear Sir or Madam,
 
-I hereby give notice of ordinary termination of my compulsory health insurance policy (KVG/LAMal)${input.policyNumber ? `, policy number ${input.policyNumber},` : ""} effective 31 December ${cancellationDeadline.getFullYear()}, in accordance with Art. 7 KVG.
+I hereby give notice of ordinary termination of my compulsory health insurance policy (KVG/LAMal)${input.policyNumber ? `, policy number ${input.policyNumber},` : ""} effective 31 December ${cancellationDeadline.getUTCFullYear()}, in accordance with Art. 7 KVG.
 
 Policyholder details:
 Name: ${fullName}
@@ -151,18 +268,88 @@ ${fullName}
 (Signature required if sending by post)
 
 ---
-Prepared by PremiumSwitch on ${formatDate(now)}. This letter is provided in English for MVP purposes — if your insurer requires German, French, or Italian correspondence, please translate before sending.`;
-}
+Prepared by PremiumSwitch on ${formatDate(now, "en")}.`;
+  },
+};
 
-export function generateApplicationSummary(
-  input: SwitchRequestInput,
-  now = new Date()
-): string {
-  const { effectiveDate } = getSwitchDates(now);
-  const fullName = `${input.firstName} ${input.lastName}`;
+const APPLICATION_SUMMARIES: Record<AppLocale, LetterFn> = {
+  de: (input, now) => {
+    const { effectiveDate } = getSwitchDates(now);
+    const fullName = `${input.firstName} ${input.lastName}`;
+    return `NEUER ANTRAG KRANKENVERSICHERUNG — ZUSAMMENFASSUNG
+Erstellt von PremiumSwitch am ${formatDate(now, "de")}
 
-  return `NEW HEALTH INSURANCE APPLICATION — REQUEST SUMMARY
-Prepared by PremiumSwitch on ${formatDate(now)}
+Dies ist kein offizielles Formular des Versicherers. Diese Zusammenfassung dient dazu, den offiziellen Antrag beim neuen Versicherer auszufüllen — entweder durch PremiumSwitch im Auftrag der antragstellenden Person oder durch diese selbst.
+
+Angaben zur antragstellenden Person:
+Name: ${fullName}
+Geburtsdatum: ${input.birthDate}
+Adresse: ${input.street}, ${input.postcode} ${input.city}
+E-Mail: ${input.email}
+Telefon: ${input.phone || "—"}
+
+Gewünschter neuer Versicherer: ${input.newInsurerName}
+Modell: Standard (Grundversicherung)
+Franchise: CHF ${input.deductible}
+Unfalldeckung: Eingeschlossen
+Geschätzte Monatsprämie: CHF ${input.premium}
+Gewünschtes Startdatum: 1. Januar ${effectiveDate.getUTCFullYear()}
+
+Wechsel von: ${input.currentInsurerName}`;
+  },
+  fr: (input, now) => {
+    const { effectiveDate } = getSwitchDates(now);
+    const fullName = `${input.firstName} ${input.lastName}`;
+    return `NOUVELLE DEMANDE D'ASSURANCE-MALADIE — RÉSUMÉ
+Préparé par PremiumSwitch le ${formatDate(now, "fr")}
+
+Ceci n'est pas un formulaire officiel de l'assureur. Ce résumé sert à compléter la demande officielle auprès du nouvel assureur, soit par PremiumSwitch au nom du/de la demandeur/euse, soit directement par celui-ci/celle-ci.
+
+Coordonnées du/de la demandeur/euse :
+Nom : ${fullName}
+Date de naissance : ${input.birthDate}
+Adresse : ${input.street}, ${input.postcode} ${input.city}
+E-mail : ${input.email}
+Téléphone : ${input.phone || "—"}
+
+Nouvel assureur souhaité : ${input.newInsurerName}
+Modèle : Standard (assurance de base)
+Franchise : CHF ${input.deductible}
+Couverture accident : Incluse
+Prime mensuelle estimée : CHF ${input.premium}
+Date de début souhaitée : 1er janvier ${effectiveDate.getUTCFullYear()}
+
+Changement depuis : ${input.currentInsurerName}`;
+  },
+  it: (input, now) => {
+    const { effectiveDate } = getSwitchDates(now);
+    const fullName = `${input.firstName} ${input.lastName}`;
+    return `NUOVA RICHIESTA DI ASSICURAZIONE MALATTIA — RIEPILOGO
+Preparato da PremiumSwitch il ${formatDate(now, "it")}
+
+Questo non è un modulo ufficiale dell'assicuratore. Questo riepilogo serve a completare la richiesta ufficiale presso il nuovo assicuratore, da parte di PremiumSwitch per conto del richiedente oppure direttamente dal richiedente stesso.
+
+Dati del richiedente:
+Nome: ${fullName}
+Data di nascita: ${input.birthDate}
+Indirizzo: ${input.street}, ${input.postcode} ${input.city}
+E-mail: ${input.email}
+Telefono: ${input.phone || "—"}
+
+Nuovo assicuratore richiesto: ${input.newInsurerName}
+Modello: Standard (assicurazione di base)
+Franchigia: CHF ${input.deductible}
+Copertura infortuni: Inclusa
+Premio mensile stimato: CHF ${input.premium}
+Data di inizio richiesta: 1° gennaio ${effectiveDate.getUTCFullYear()}
+
+Cambio da: ${input.currentInsurerName}`;
+  },
+  en: (input, now) => {
+    const { effectiveDate } = getSwitchDates(now);
+    const fullName = `${input.firstName} ${input.lastName}`;
+    return `NEW HEALTH INSURANCE APPLICATION — REQUEST SUMMARY
+Prepared by PremiumSwitch on ${formatDate(now, "en")}
 
 This is not an official insurer form. It summarizes the details needed to
 complete the new insurer's official application, either by PremiumSwitch on
@@ -180,7 +367,24 @@ Model: Standard (Grundversicherung)
 Deductible: CHF ${input.deductible}
 Accident coverage: Included
 Estimated monthly premium: CHF ${input.premium}
-Requested start date: 1 January ${effectiveDate.getFullYear()}
+Requested start date: 1 January ${effectiveDate.getUTCFullYear()}
 
 Switching from: ${input.currentInsurerName}`;
+  },
+};
+
+export function generateCancellationLetter(
+  input: SwitchRequestInput,
+  now = new Date(),
+  locale: AppLocale = "de"
+): string {
+  return CANCELLATION_LETTERS[locale](input, now);
+}
+
+export function generateApplicationSummary(
+  input: SwitchRequestInput,
+  now = new Date(),
+  locale: AppLocale = "de"
+): string {
+  return APPLICATION_SUMMARIES[locale](input, now);
 }

@@ -48,9 +48,17 @@ export type ComparisonInput = {
   currentPremium?: number;
 };
 
+export type ComparisonErrorCode =
+  | "postcodeInvalid"
+  | "postcodeNotFound"
+  | "birthYearInvalid"
+  | "deductibleRequired"
+  | "deductibleInvalidOptions";
+
 export type ComparisonError = {
   field: "postcode" | "birthYear" | "deductible";
-  message: string;
+  code: ComparisonErrorCode;
+  params?: Record<string, string>;
 };
 
 export type InsurerOption = {
@@ -81,15 +89,9 @@ export function validateComparisonInput(
   const currentYear = new Date().getFullYear();
 
   if (!input.postcode || !/^[1-9]\d{3}$/.test(input.postcode)) {
-    errors.push({
-      field: "postcode",
-      message: "Enter a valid Swiss postcode (1000–9999).",
-    });
+    errors.push({ field: "postcode", code: "postcodeInvalid" });
   } else if (!regionTable[input.postcode]) {
-    errors.push({
-      field: "postcode",
-      message: "This postcode isn't in the official premium region data.",
-    });
+    errors.push({ field: "postcode", code: "postcodeNotFound" });
   }
 
   if (
@@ -97,10 +99,7 @@ export function validateComparisonInput(
     input.birthYear < currentYear - 120 ||
     input.birthYear > currentYear
   ) {
-    errors.push({
-      field: "birthYear",
-      message: "Enter a valid birth year.",
-    });
+    errors.push({ field: "birthYear", code: "birthYearInvalid" });
   }
 
   if (
@@ -108,17 +107,15 @@ export function validateComparisonInput(
     Number.isNaN(input.deductible) ||
     input.deductible < 0
   ) {
-    errors.push({
-      field: "deductible",
-      message: "Choose a deductible.",
-    });
+    errors.push({ field: "deductible", code: "deductibleRequired" });
   } else if (input.birthYear) {
     const ageClass = ageToAgeClass(input.birthYear);
     const validDeductibles = getAvailableDeductibles(ageClass);
     if (!validDeductibles.includes(input.deductible)) {
       errors.push({
         field: "deductible",
-        message: `Choose one of the valid deductibles for this age group: ${validDeductibles.join(", ")}.`,
+        code: "deductibleInvalidOptions",
+        params: { options: validDeductibles.join(", ") },
       });
     }
   }

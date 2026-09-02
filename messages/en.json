@@ -1,0 +1,84 @@
+{
+  "languages": { "de": "Deutsch", "fr": "Français", "it": "Italiano", "en": "English" },
+  "meta": {
+    "title": "PremiumSwitch — Find your cheapest Swiss health insurance",
+    "description": "Compare official Priminfo premium data across all Swiss insurers and find your cheapest health insurance in 60 seconds."
+  },
+  "hero": {
+    "eyebrow": "Official Priminfo data · {year}",
+    "title": "Find your cheapest health insurance in 60 seconds",
+    "subtitle": "Compare every Swiss health insurer using official government premium data. No spam, no sales calls — just the numbers."
+  },
+  "footer": {
+    "text": "Premium data from the <link>Federal Office of Public Health (BAG)</link>. PremiumSwitch is not affiliated with any insurer."
+  },
+  "form": {
+    "cardTitle": "Compare your premium",
+    "postcode": "Postcode",
+    "birthYear": "Birth year",
+    "currentPremium": "Current premium (CHF/mo)",
+    "currentPremiumPlaceholder": "Optional",
+    "deductible": "Deductible (CHF)",
+    "deductibleOption": "CHF {amount}",
+    "submit": "Compare now",
+    "submitting": "Comparing...",
+    "ambiguousPostcode": "Your postcode spans more than one premium region — these prices use the most common region for it. For an exact quote, confirm with your municipality of residence.",
+    "noResults": "No plans found for this combination. Try a different deductible."
+  },
+  "badges": {
+    "cheapest": "Cheapest",
+    "bestValue": "Best value",
+    "mostPopular": "Most popular"
+  },
+  "results": {
+    "save": "Save CHF {monthly}/mo · CHF {yearly}/yr",
+    "perMonth": "per month"
+  },
+  "cta": {
+    "title": "Ready to switch and start saving?",
+    "subtitle": "We''ll handle the cancellation letter and new application for you.",
+    "button": "Switch for me — CHF 49 one-time"
+  },
+  "switchForm": {
+    "switchTo": "Switch to",
+    "insurerOption": "{name} — CHF {premium}/mo",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "birthDate": "Date of birth",
+    "street": "Street and number",
+    "postcode": "Postcode",
+    "city": "City",
+    "email": "Email",
+    "phone": "Phone (optional)",
+    "currentInsurer": "Current insurer",
+    "currentInsurerPlaceholder": "Select your current insurer",
+    "cancel": "Cancel",
+    "submit": "Send my switch request",
+    "submitting": "Sending..."
+  },
+  "switchSuccess": {
+    "title": "Request received",
+    "body": "We''ve drafted your cancellation letter (effective {deadline}) and your new application for {insurer} (starting {effective}). No payment has been taken yet — our team will contact you at {email} to confirm details and arrange the CHF 49 fee before anything is sent to insurers.",
+    "downloadLetter": "Cancellation letter",
+    "downloadSummary": "Application summary",
+    "previewLetter": "Preview cancellation letter"
+  },
+  "errors": {
+    "postcodeInvalid": "Enter a valid Swiss postcode (1000–9999).",
+    "postcodeNotFound": "This postcode isn''t in the official premium region data.",
+    "birthYearInvalid": "Enter a valid birth year.",
+    "deductibleRequired": "Choose a deductible.",
+    "deductibleInvalidOptions": "Choose one of the valid deductibles for this age group: {options}.",
+    "invalidBody": "Invalid request.",
+    "tooLarge": "Request too large.",
+    "tooManyRequests": "Too many requests. Please try again shortly.",
+    "required": "This field is required.",
+    "maxLength": "Must be {max} characters or fewer.",
+    "invalidDate": "Enter a valid date.",
+    "invalidEmail": "Enter a valid email address.",
+    "invalidSwissPostcode": "Enter a valid Swiss postcode.",
+    "missingPremium": "Couldn''t determine the selected plan.",
+    "invalidDeductible": "Invalid deductible.",
+    "generic": "Something went wrong. Please try again."
+  }
+}

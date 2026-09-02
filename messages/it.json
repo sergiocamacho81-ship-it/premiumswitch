@@ -1,0 +1,84 @@
+{
+  "languages": { "de": "Deutsch", "fr": "Français", "it": "Italiano", "en": "English" },
+  "meta": {
+    "title": "PremiumSwitch — Trova la tua assicurazione malattia più conveniente",
+    "description": "Confronta i dati ufficiali dei premi di tutte le casse malati svizzere e trova la tua assicurazione di base più conveniente in 60 secondi."
+  },
+  "hero": {
+    "eyebrow": "Dati ufficiali Priminfo · {year}",
+    "title": "Trova la tua assicurazione malattia più conveniente in 60 secondi",
+    "subtitle": "Confronta tutte le casse malati svizzere utilizzando i dati ufficiali della Confederazione. Niente spam, nessuna chiamata commerciale — solo i numeri."
+  },
+  "footer": {
+    "text": "Dati sui premi forniti dall''<link>Ufficio federale della sanità pubblica (UFSP)</link>. PremiumSwitch non è affiliato a nessun assicuratore."
+  },
+  "form": {
+    "cardTitle": "Confronta il tuo premio",
+    "postcode": "NPA",
+    "birthYear": "Anno di nascita",
+    "currentPremium": "Premio attuale (CHF/mese)",
+    "currentPremiumPlaceholder": "Facoltativo",
+    "deductible": "Franchigia (CHF)",
+    "deductibleOption": "CHF {amount}",
+    "submit": "Confronta ora",
+    "submitting": "Confronto in corso...",
+    "ambiguousPostcode": "Il tuo NPA comprende più regioni di premio — questi prezzi si basano sulla regione più comune. Per un preventivo esatto, conferma il tuo comune di domicilio.",
+    "noResults": "Nessuna offerta trovata per questa combinazione. Prova con una franchigia diversa."
+  },
+  "badges": {
+    "cheapest": "Il più economico",
+    "bestValue": "Miglior rapporto qualità-prezzo",
+    "mostPopular": "Il più popolare"
+  },
+  "results": {
+    "save": "Risparmia CHF {monthly}/mese · CHF {yearly}/anno",
+    "perMonth": "al mese"
+  },
+  "cta": {
+    "title": "Pronto a cambiare e a risparmiare?",
+    "subtitle": "Ci occupiamo noi della lettera di disdetta e della nuova richiesta.",
+    "button": "Cambia per me — CHF 49 una tantum"
+  },
+  "switchForm": {
+    "switchTo": "Cambia con",
+    "insurerOption": "{name} — CHF {premium}/mese",
+    "firstName": "Nome",
+    "lastName": "Cognome",
+    "birthDate": "Data di nascita",
+    "street": "Via e numero",
+    "postcode": "NPA",
+    "city": "Località",
+    "email": "E-mail",
+    "phone": "Telefono (facoltativo)",
+    "currentInsurer": "Assicuratore attuale",
+    "currentInsurerPlaceholder": "Seleziona il tuo assicuratore attuale",
+    "cancel": "Annulla",
+    "submit": "Invia la mia richiesta di cambio",
+    "submitting": "Invio in corso..."
+  },
+  "switchSuccess": {
+    "title": "Richiesta ricevuta",
+    "body": "Abbiamo preparato la tua lettera di disdetta (valida dal {deadline}) e la tua nuova richiesta per {insurer} (inizio {effective}). Non è stato ancora effettuato alcun pagamento — il nostro team ti contatterà all''indirizzo {email} per confermare i dettagli e concordare i CHF 49 prima di inviare qualsiasi cosa agli assicuratori.",
+    "downloadLetter": "Lettera di disdetta",
+    "downloadSummary": "Riepilogo della richiesta",
+    "previewLetter": "Anteprima lettera di disdetta"
+  },
+  "errors": {
+    "postcodeInvalid": "Inserisci un NPA svizzero valido (1000–9999).",
+    "postcodeNotFound": "Questo NPA non è presente nei dati ufficiali delle regioni di premio.",
+    "birthYearInvalid": "Inserisci un anno di nascita valido.",
+    "deductibleRequired": "Scegli una franchigia.",
+    "deductibleInvalidOptions": "Scegli una franchigia valida per questa fascia d''età: {options}.",
+    "invalidBody": "Richiesta non valida.",
+    "tooLarge": "Richiesta troppo grande.",
+    "tooManyRequests": "Troppe richieste. Riprova più tardi.",
+    "required": "Questo campo è obbligatorio.",
+    "maxLength": "Deve contenere al massimo {max} caratteri.",
+    "invalidDate": "Inserisci una data valida.",
+    "invalidEmail": "Inserisci un indirizzo e-mail valido.",
+    "invalidSwissPostcode": "Inserisci un NPA svizzero valido.",
+    "missingPremium": "Impossibile determinare il piano selezionato.",
+    "invalidDeductible": "Franchigia non valida.",
+    "generic": "Qualcosa è andato storto. Riprova."
+  }
+}

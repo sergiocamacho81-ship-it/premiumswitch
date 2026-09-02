@@ -16,6 +16,13 @@ import {
   tooManyRequestsResponse,
   payloadTooLargeResponse,
 } from "@/lib/requestGuards";
+import { routing, type AppLocale } from "@/i18n/routing";
+
+function parseLocale(value: unknown): AppLocale {
+  return routing.locales.includes(value as AppLocale)
+    ? (value as AppLocale)
+    : routing.defaultLocale;
+}
 
 const DOCUMENTS_DIR = path.join(process.cwd(), "documents");
 const MAX_BODY_BYTES = 20_000;
@@ -34,12 +41,13 @@ export async function POST(request: Request) {
   if (!parsed.ok) {
     if (parsed.reason === "too_large") return payloadTooLargeResponse();
     return NextResponse.json(
-      { errors: [{ field: "form", message: "Invalid request body." }] },
+      { errors: [{ field: "form", code: "invalidBody" }] },
       { status: 400 }
     );
   }
 
   const raw = parsed.data as Record<string, unknown>;
+  const locale = parseLocale(raw.locale);
   const input: Partial<SwitchRequestInput> = {
     firstName: String(raw.firstName ?? "").trim(),
     lastName: String(raw.lastName ?? "").trim(),
@@ -64,8 +72,8 @@ export async function POST(request: Request) {
   const validInput = input as SwitchRequestInput;
   const now = new Date();
   const { cancellationDeadline, effectiveDate } = getSwitchDates(now);
-  const cancellationLetter = generateCancellationLetter(validInput, now);
-  const applicationSummary = generateApplicationSummary(validInput, now);
+  const cancellationLetter = generateCancellationLetter(validInput, now, locale);
+  const applicationSummary = generateApplicationSummary(validInput, now, locale);
 
   const saved = await saveSubmission({
     ...validInput,

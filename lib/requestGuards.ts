@@ -52,18 +52,14 @@ export async function readJsonWithLimit(
 
 export function tooManyRequestsResponse(retryAfterSeconds = 60): NextResponse {
   return NextResponse.json(
-    {
-      errors: [
-        { field: "form", message: "Too many requests. Please try again shortly." },
-      ],
-    },
+    { errors: [{ field: "form", code: "tooManyRequests" }] },
     { status: 429, headers: { "Retry-After": String(retryAfterSeconds) } }
   );
 }
 
 export function payloadTooLargeResponse(): NextResponse {
   return NextResponse.json(
-    { errors: [{ field: "form", message: "Request too large." }] },
+    { errors: [{ field: "form", code: "tooLarge" }] },
     { status: 413 }
   );
 }

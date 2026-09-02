@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   if (!parsed.ok) {
     if (parsed.reason === "too_large") return payloadTooLargeResponse();
     return NextResponse.json(
-      { errors: [{ field: "postcode", message: "Invalid request body." }] },
+      { errors: [{ field: "postcode", code: "invalidBody" }] },
       { status: 400 }
     );
   }
@@ -51,14 +51,7 @@ export async function POST(request: Request) {
   const result = getCheapestInsurers(input as ComparisonInput);
   if (!result) {
     return NextResponse.json(
-      {
-        errors: [
-          {
-            field: "postcode",
-            message: "This postcode isn't in the official premium region data.",
-          },
-        ],
-      },
+      { errors: [{ field: "postcode", code: "postcodeNotFound" }] },
       { status: 400 }
     );
   }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { Loader2, TrendingDown, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,10 +20,10 @@ import { ageToAgeClass, getAvailableDeductibles } from "@/lib/ageClass";
 import { SwitchRequestForm } from "@/components/switch-request-form";
 import type { ComparisonResult, ComparisonError } from "@/lib/priminfo";
 
-const BADGE_LABEL: Record<string, string> = {
-  cheapest: "Cheapest",
-  "best-value": "Best value",
-  "most-popular": "Most popular",
+const BADGE_KEY: Record<string, string> = {
+  cheapest: "cheapest",
+  "best-value": "bestValue",
+  "most-popular": "mostPopular",
 };
 
 const BADGE_VARIANT: Record<string, "default" | "secondary"> = {
@@ -32,11 +33,13 @@ const BADGE_VARIANT: Record<string, "default" | "secondary"> = {
 };
 
 export function ComparisonForm() {
+  const t = useTranslations();
+  const locale = useLocale();
   const [postcode, setPostcode] = useState("");
   const [birthYear, setBirthYear] = useState("");
   const [currentPremium, setCurrentPremium] = useState("");
   const [deductible, setDeductible] = useState("300");
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [fieldErrors, setFieldErrors] = useState<Record<string, ComparisonError>>({});
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [result, setResult] = useState<ComparisonResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -50,6 +53,10 @@ export function ComparisonForm() {
         : "ERW";
     return getAvailableDeductibles(ageClass);
   }, [birthYear]);
+
+  function errorText(err: ComparisonError): string {
+    return t(`errors.${err.code}`, err.params);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -73,9 +80,9 @@ export function ComparisonForm() {
       const data = await res.json();
 
       if (!res.ok) {
-        const errors: Record<string, string> = {};
+        const errors: Record<string, ComparisonError> = {};
         (data.errors as ComparisonError[]).forEach((err) => {
-          errors[err.field] = err.message;
+          errors[err.field] = err;
         });
         setFieldErrors(errors);
         setResult(null);
@@ -84,7 +91,7 @@ export function ComparisonForm() {
 
       setResult(data as ComparisonResult);
     } catch {
-      setGeneralError("Something went wrong. Please try again.");
+      setGeneralError(t("errors.generic"));
     } finally {
       setLoading(false);
     }
@@ -94,13 +101,13 @@ export function ComparisonForm() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Compare your premium</CardTitle>
+          <CardTitle>{t("form.cardTitle")}</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="postcode">Postcode</Label>
+                <Label htmlFor="postcode">{t("form.postcode")}</Label>
                 <Input
                   id="postcode"
                   inputMode="numeric"
@@ -114,13 +121,13 @@ export function ComparisonForm() {
                 />
                 {fieldErrors.postcode && (
                   <p className="text-sm text-destructive">
-                    {fieldErrors.postcode}
+                    {errorText(fieldErrors.postcode)}
                   </p>
                 )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="birthYear">Birth year</Label>
+                <Label htmlFor="birthYear">{t("form.birthYear")}</Label>
                 <Input
                   id="birthYear"
                   inputMode="numeric"
@@ -134,7 +141,7 @@ export function ComparisonForm() {
                 />
                 {fieldErrors.birthYear && (
                   <p className="text-sm text-destructive">
-                    {fieldErrors.birthYear}
+                    {errorText(fieldErrors.birthYear)}
                   </p>
                 )}
               </div>
@@ -143,12 +150,12 @@ export function ComparisonForm() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="currentPremium">
-                  Current premium (CHF/mo)
+                  {t("form.currentPremium")}
                 </Label>
                 <Input
                   id="currentPremium"
                   inputMode="decimal"
-                  placeholder="Optional"
+                  placeholder={t("form.currentPremiumPlaceholder")}
                   value={currentPremium}
                   onChange={(e) =>
                     setCurrentPremium(e.target.value.replace(/[^0-9.]/g, ""))
@@ -157,7 +164,7 @@ export function ComparisonForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="deductible">Deductible (CHF)</Label>
+                <Label htmlFor="deductible">{t("form.deductible")}</Label>
                 <Select value={deductible} onValueChange={setDeductible}>
                   <SelectTrigger id="deductible">
                     <SelectValue />
@@ -165,14 +172,14 @@ export function ComparisonForm() {
                   <SelectContent>
                     {deductibleOptions.map((d) => (
                       <SelectItem key={d} value={String(d)}>
-                        CHF {d}
+                        {t("form.deductibleOption", { amount: d })}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 {fieldErrors.deductible && (
                   <p className="text-sm text-destructive">
-                    {fieldErrors.deductible}
+                    {errorText(fieldErrors.deductible)}
                   </p>
                 )}
               </div>
@@ -187,10 +194,10 @@ export function ComparisonForm() {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? (
                 <>
-                  <Loader2 className="animate-spin" /> Comparing...
+                  <Loader2 className="animate-spin" /> {t("form.submitting")}
                 </>
               ) : (
-                "Compare now"
+                t("form.submit")
               )}
             </Button>
           </form>
@@ -202,20 +209,13 @@ export function ComparisonForm() {
           {result.ambiguousPostcode && (
             <Alert>
               <Info className="h-4 w-4" />
-              <AlertDescription>
-                Your postcode spans more than one premium region — these
-                prices use the most common region for it. For an exact quote,
-                confirm with your municipality of residence.
-              </AlertDescription>
+              <AlertDescription>{t("form.ambiguousPostcode")}</AlertDescription>
             </Alert>
           )}
 
           {result.options.length === 0 ? (
             <Alert>
-              <AlertDescription>
-                No plans found for this combination. Try a different
-                deductible.
-              </AlertDescription>
+              <AlertDescription>{t("form.noResults")}</AlertDescription>
             </Alert>
           ) : (
             <div className="space-y-3">
@@ -229,7 +229,7 @@ export function ComparisonForm() {
                         </span>
                         {option.badges.map((b) => (
                           <Badge key={b} variant={BADGE_VARIANT[b]}>
-                            {BADGE_LABEL[b]}
+                            {t(`badges.${BADGE_KEY[b]}`)}
                           </Badge>
                         ))}
                       </div>
@@ -237,8 +237,10 @@ export function ComparisonForm() {
                         option.monthlySavingsVsCurrent > 0 && (
                           <p className="flex items-center gap-1 text-sm font-medium text-green-600 dark:text-green-500">
                             <TrendingDown className="h-4 w-4" />
-                            Save CHF {option.monthlySavingsVsCurrent}/mo · CHF{" "}
-                            {option.annualSavingsVsCurrent}/yr
+                            {t("results.save", {
+                              monthly: option.monthlySavingsVsCurrent,
+                              yearly: option.annualSavingsVsCurrent ?? 0,
+                            })}
                           </p>
                         )}
                     </div>
@@ -247,7 +249,7 @@ export function ComparisonForm() {
                         CHF {option.premium}
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        per month
+                        {t("results.perMonth")}
                       </div>
                     </div>
                   </CardContent>
@@ -263,19 +265,17 @@ export function ComparisonForm() {
                   <SwitchRequestForm
                     options={result.options}
                     deductible={Number(deductible)}
+                    locale={locale}
                     onCancel={() => setSwitchRequested(false)}
                   />
                 ) : (
                   <div className="space-y-3 text-center">
-                    <h3 className="text-lg font-semibold">
-                      Ready to switch and start saving?
-                    </h3>
+                    <h3 className="text-lg font-semibold">{t("cta.title")}</h3>
                     <p className="text-sm text-muted-foreground">
-                      We&apos;ll handle the cancellation letter and new
-                      application for you.
+                      {t("cta.subtitle")}
                     </p>
                     <Button onClick={() => setSwitchRequested(true)}>
-                      Switch for me — CHF 49 one-time
+                      {t("cta.button")}
                     </Button>
                   </div>
                 )}
