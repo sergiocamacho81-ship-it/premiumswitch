@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 import createIntlMiddleware from "next-intl/middleware";
 import { routing } from "@/i18n/routing";
 import { isRateLimited, checkRateLimit, getClientIp } from "@/lib/rateLimit";
@@ -62,6 +63,54 @@ async function adminAuthMiddleware(request: NextRequest): Promise<NextResponse> 
   });
 }
 
+const PUBLIC_BROKER_PATHS = ["/broker/login", "/broker/signup"];
+
+async function brokerSessionMiddleware(request: NextRequest): Promise<NextResponse> {
+  let response = NextResponse.next({ request });
+
+  const url = process.env.SUPABASE_URL;
+  const anonKey = process.env.SUPABASE_ANON_KEY;
+  const { pathname } = request.nextUrl;
+  const isPublicBrokerPath = PUBLIC_BROKER_PATHS.includes(pathname);
+
+  if (!url || !anonKey) {
+    // Broker auth isn't configured yet — treat protected broker routes as
+    // unavailable rather than silently letting requests through unchecked.
+    if (!isPublicBrokerPath) {
+      return new NextResponse("Broker portal is not configured.", { status: 503 });
+    }
+    return response;
+  }
+
+  const supabase = createServerClient(url, anonKey, {
+    cookies: {
+      getAll: () => request.cookies.getAll(),
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+        response = NextResponse.next({ request });
+        cookiesToSet.forEach(({ name, value, options }) =>
+          response.cookies.set(name, value, options)
+        );
+      },
+    },
+  });
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user && !isPublicBrokerPath) {
+    const loginUrl = new URL("/broker/login", request.url);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  if (user && isPublicBrokerPath) {
+    return NextResponse.redirect(new URL("/broker/dashboard", request.url));
+  }
+
+  return response;
+}
+
 export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -71,9 +120,17 @@ export default async function middleware(request: NextRequest) {
     return adminAuthMiddleware(request);
   }
 
+  if (pathname.startsWith("/broker")) {
+    return brokerSessionMiddleware(request);
+  }
+
   return intlMiddleware(request);
 }
 
 export const config = {
-  matcher: ["/api/admin/:path*", "/((?!api|_next|_vercel|.*\\..*).*)"],
+  matcher: [
+    "/api/admin/:path*",
+    "/broker/:path*",
+    "/((?!api|_next|_vercel|.*\\..*).*)",
+  ],
 };

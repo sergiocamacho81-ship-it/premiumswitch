@@ -1,5 +1,6 @@
 import "server-only";
 import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase";
+import { getSupabaseForRequest } from "@/lib/supabaseServer";
 
 export type SubmissionStatus = "new" | "contacted" | "done";
 
@@ -21,6 +22,7 @@ export type SubmissionRecord = {
   deductible: number;
   cancellationLetter: string;
   applicationSummary: string;
+  brokerId?: string;
 };
 
 type NewSubmission = Omit<SubmissionRecord, "id" | "submittedAt" | "status">;
@@ -43,6 +45,7 @@ function toRow(s: NewSubmission) {
     deductible: s.deductible,
     cancellation_letter: s.cancellationLetter,
     application_summary: s.applicationSummary,
+    broker_id: s.brokerId ?? null,
   };
 }
 
@@ -65,6 +68,7 @@ function fromRow(row: Record<string, unknown>): SubmissionRecord {
     deductible: Number(row.deductible),
     cancellationLetter: row.cancellation_letter as string,
     applicationSummary: row.application_summary as string,
+    brokerId: (row.broker_id as string) ?? undefined,
   };
 }
 
@@ -101,6 +105,41 @@ export async function listSubmissions(): Promise<SubmissionRecord[]> {
   }
 
   return data.map(fromRow);
+}
+
+/**
+ * Uses the request-scoped (RLS-respecting) client rather than the service
+ * role — so even a bug in the caller's own authorization logic can't leak
+ * another broker's submissions, since Postgres enforces broker_id =
+ * auth.uid() regardless of what this function does.
+ */
+export async function listSubmissionsForBroker(): Promise<SubmissionRecord[]> {
+  const supabase = await getSupabaseForRequest();
+  const { data, error } = await supabase
+    .from(TABLE)
+    .select("*")
+    .order("submitted_at", { ascending: false });
+
+  if (error) {
+    console.error("Failed to list broker submissions", error);
+    return [];
+  }
+
+  return data.map(fromRow);
+}
+
+export async function updateSubmissionStatusForBroker(
+  id: string,
+  status: SubmissionStatus
+): Promise<boolean> {
+  const supabase = await getSupabaseForRequest();
+  const { error } = await supabase.from(TABLE).update({ status }).eq("id", id);
+
+  if (error) {
+    console.error("Failed to update broker submission status", error);
+    return false;
+  }
+  return true;
 }
 
 export async function updateSubmissionStatus(

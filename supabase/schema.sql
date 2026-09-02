@@ -91,3 +91,33 @@ begin
   return coalesce(v_count, 0) >= p_max_requests;
 end;
 $$;
+
+-- Phase 7: broker accounts and multi-tenant submission ownership.
+-- Re-running this whole file is safe — every statement below is idempotent.
+
+create table if not exists brokers (
+  id uuid primary key references auth.users (id) on delete cascade,
+  company_name text not null,
+  contact_email text not null,
+  status text not null default 'trial' check (status in ('trial', 'active', 'canceled')),
+  created_at timestamptz not null default now()
+);
+alter table brokers enable row level security;
+
+drop policy if exists "Brokers manage their own profile" on brokers;
+create policy "Brokers manage their own profile" on brokers
+  for all
+  using (auth.uid() = id)
+  with check (auth.uid() = id);
+
+-- Existing submissions predate broker accounts, so this column has to be
+-- nullable: null means "submitted directly through the public tool", not
+-- tied to any broker. Phase 8 (white-labeled broker pages) is what will
+-- start populating this for real for public submissions.
+alter table submissions add column if not exists broker_id uuid references brokers (id);
+
+drop policy if exists "Brokers manage their own submissions" on submissions;
+create policy "Brokers manage their own submissions" on submissions
+  for all
+  using (auth.uid() = broker_id)
+  with check (auth.uid() = broker_id);

@@ -5,10 +5,15 @@ Compare official Swiss health insurance premium data and switch insurers.
 ## Stack
 
 - Next.js 14 (App Router) + TypeScript + Tailwind + shadcn/ui
+- Localized (DE/FR/IT/EN) via next-intl — see `i18n/` and `messages/`
 - Premium/region/insurer data: cached JSON in `/data`, refreshed from official
   BAG/Priminfo open data (see `data/README.md`)
 - Switch-request submissions: Supabase (`/lib/submissions.ts`)
-- Admin dashboard at `/admin`, protected by HTTP Basic Auth
+- Admin dashboard at `/admin` (all brokers' submissions), protected by HTTP
+  Basic Auth
+- Broker portal at `/broker` (signup/login/dashboard), backed by Supabase
+  Auth — each broker only ever sees their own submissions, enforced by
+  Postgres Row Level Security, not just application code
 
 ## Local development
 
@@ -32,24 +37,59 @@ Copy `.env.local.example` to `.env.local` and fill in real values:
 
 | Variable | Required for | Notes |
 | --- | --- | --- |
-| `SUPABASE_URL` | Switch-request storage + `/admin` | Supabase project URL |
+| `SUPABASE_URL` | Switch-request storage + `/admin` + `/broker` | Supabase project URL |
 | `SUPABASE_SERVICE_ROLE_KEY` | Switch-request storage + `/admin` | Server-side only, full access — never expose to the browser |
+| `SUPABASE_ANON_KEY` | `/broker` (auth) | Server-side only in this app (see Security) — required for signup/login/session |
 | `ADMIN_USER` | `/admin` | Basic Auth username |
 | `ADMIN_PASSWORD` | `/admin` | Basic Auth password |
 
 Without `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY`, the comparison tool still
 works fully — only switch-request persistence and the admin dashboard need
 Supabase. Without `ADMIN_USER`/`ADMIN_PASSWORD`, `/admin` refuses all access
-(503) rather than defaulting to open.
+(503) rather than defaulting to open. Without `SUPABASE_ANON_KEY`, `/broker/*`
+refuses all access (503) the same way.
 
 ## Supabase setup
 
 1. Create a free project at [supabase.com](https://supabase.com).
-2. In the SQL Editor, run `supabase/schema.sql` to create the `submissions`
-   table (RLS is enabled with no policies, so only the service_role key —
-   server-side only — can read or write it).
-3. In Project Settings > API, copy the Project URL and the `service_role`
-   secret key into `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY`.
+2. In the SQL Editor, run `supabase/schema.sql` — safe to re-run any time,
+   every statement is idempotent. Creates `submissions`, `rate_limits`, and
+   (Phase 7) `brokers`, plus the RLS policies for each.
+3. In Project Settings > API, copy the Project URL, the `service_role`
+   secret key, and the `anon` `public` key into `SUPABASE_URL` /
+   `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_ANON_KEY` respectively.
+
+## Broker portal (Phase 7)
+
+`/broker/signup` and `/broker/login` create/authenticate a Supabase Auth
+user and a matching row in `brokers`; `/broker/dashboard` is protected by
+`middleware.ts` (redirects to `/broker/login` if there's no valid session) and
+shows that broker's own comparison tool + submissions only — a broker who
+switches a client through their dashboard gets that submission tagged with
+their `broker_id` automatically (derived server-side from the verified
+session in `/api/switch-request`, never trusted from the client).
+
+Two independent data views exist on purpose: `/admin` (Basic Auth) is the
+platform operator's view across every broker; `/broker/dashboard` (Supabase
+Auth) is a single broker's own view, enforced at the database level via RLS
+(`broker_id = auth.uid()`) — even a bug in the application code couldn't leak
+one broker's submissions to another, because Postgres itself denies the query.
+
+Not yet built (later phases): white-labeled public pages tied to a specific
+broker's branding (Phase 8), client/portfolio management beyond one-off
+submissions (Phase 9), and subscription billing gating dashboard access
+(Phase 10 — the `brokers.status` column already exists for this).
+
+**Before real brokers sign up**: Supabase requires email confirmation by
+default, and its shared built-in email service has a very low send rate
+limit (a handful of emails per hour) — fine for occasional testing, not
+enough for real signups. Before launch, either configure Custom SMTP
+(Authentication > Settings in the Supabase dashboard — Resend, Postmark, and
+SendGrid all have free tiers) so confirmation emails send reliably, or
+disable "Confirm email" under Authentication > Providers > Email if you'd
+rather skip email verification entirely for this MVP. Local testing during
+development used the Supabase Admin API to create pre-confirmed users
+directly, bypassing this limit — not something the app does at runtime.
 
 ## Deploying to Vercel
 
@@ -87,11 +127,14 @@ of truth for `/admin`.
   and the cap is enforced while streaming the body — not by trusting the
   spoofable `Content-Length` header — so an attacker can't send a large body
   by lying about or omitting it.
-- **Data access**: the Supabase `submissions` table has Row Level Security
-  enabled with zero policies, so only the `service_role` key (server-side
-  only, guarded by the `server-only` package so it can never end up in a
-  client bundle) can read or write it — the public/anon key has no access at
-  all.
+- **Data access**: the Supabase `submissions` and `rate_limits` tables have
+  Row Level Security enabled with zero policies, so only the `service_role`
+  key (server-side only, guarded by the `server-only` package so it can never
+  end up in a client bundle) can read or write them. `brokers` and
+  `submissions` additionally carry a `broker_id = auth.uid()` policy for the
+  anon-key-plus-session path the broker portal uses — a broker's queries are
+  scoped by Postgres itself, not just by application code, so a bug in a
+  route handler can't leak another broker's data.
 - **No secrets in the client bundle**: verified by inspecting the production
   build output — `/` ships 133KB total, none of it Supabase credentials or
   the ~800KB of premium/region reference data.
@@ -129,3 +172,12 @@ conditions or government IDs, just name/address/contact/insurer choice):
   popovers (used by the deductible/insurer `<Select>`s) render correctly, and
   dev-mode Fast Refresh (which needs `unsafe-eval`) works without console
   errors.
+- Broker multi-tenancy (Phase 7): two test brokers each submitted a
+  switch-request through their own dashboard; each broker's `/api/broker/submissions`
+  showed only their own (never the other's), `/admin` showed both with correct
+  `broker_id` attribution, and `updateSubmissionStatusForBroker` correctly
+  updated status through the RLS-scoped client. Middleware redirect behavior
+  verified in both directions: no session → `/broker/dashboard` redirects to
+  `/broker/login`; active session → `/broker/login` redirects to
+  `/broker/dashboard`. Logout verified to actually invalidate the session
+  (confirmed the same cookies that worked before logout get redirected after).

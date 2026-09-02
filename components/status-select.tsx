@@ -14,16 +14,18 @@ import type { SubmissionStatus } from "@/lib/submissions";
 export function StatusSelect({
   id,
   status,
+  endpoint,
 }: {
   id: string;
   status: SubmissionStatus;
+  endpoint: string;
 }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
 
   async function handleChange(value: string) {
     setPending(true);
-    await fetch("/api/admin/submissions", {
+    await fetch(endpoint, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, status: value }),

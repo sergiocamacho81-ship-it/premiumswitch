@@ -17,6 +17,7 @@ import {
   payloadTooLargeResponse,
 } from "@/lib/requestGuards";
 import { routing, type AppLocale } from "@/i18n/routing";
+import { isSupabaseAuthConfigured, getSupabaseForRequest } from "@/lib/supabaseServer";
 
 function parseLocale(value: unknown): AppLocale {
   return routing.locales.includes(value as AppLocale)
@@ -75,10 +76,24 @@ export async function POST(request: Request) {
   const cancellationLetter = generateCancellationLetter(validInput, now, locale);
   const applicationSummary = generateApplicationSummary(validInput, now, locale);
 
+  // If this request carries a signed-in broker's session, attribute the
+  // submission to them — derived server-side from the verified session,
+  // never trusted from the client, so a caller can't claim someone else's
+  // broker_id.
+  let brokerId: string | undefined;
+  if (isSupabaseAuthConfigured()) {
+    const supabase = await getSupabaseForRequest();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    brokerId = user?.id;
+  }
+
   const saved = await saveSubmission({
     ...validInput,
     cancellationLetter,
     applicationSummary,
+    brokerId,
   });
   const id = saved?.id ?? randomUUID();
 
