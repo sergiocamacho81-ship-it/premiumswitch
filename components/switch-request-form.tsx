@@ -22,6 +22,7 @@ type Props = {
   options: InsurerOption[];
   deductible: number;
   locale: string;
+  brokerId?: string;
   onCancel: () => void;
 };
 
@@ -55,7 +56,13 @@ function downloadText(filename: string, content: string) {
   URL.revokeObjectURL(url);
 }
 
-export function SwitchRequestForm({ options, deductible, locale, onCancel }: Props) {
+export function SwitchRequestForm({
+  options,
+  deductible,
+  locale,
+  brokerId,
+  onCancel,
+}: Props) {
   const t = useTranslations();
   const [newInsurerName, setNewInsurerName] = useState(
     options[0]?.insurerName ?? ""
@@ -104,6 +111,7 @@ export function SwitchRequestForm({ options, deductible, locale, onCancel }: Pro
           premium: selectedOption?.premium,
           deductible,
           locale,
+          brokerId,
         }),
       });
 

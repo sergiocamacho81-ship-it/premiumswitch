@@ -80,5 +80,8 @@
     "missingPremium": "Impossibile determinare il piano selezionato.",
     "invalidDeductible": "Franchigia non valida.",
     "generic": "Qualcosa è andato storto. Riprova."
+  },
+  "brokerPage": {
+    "tagline": "Confronto assicurazione malattia di {company}"
   }
 }

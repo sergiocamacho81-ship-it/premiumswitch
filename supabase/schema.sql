@@ -121,3 +121,23 @@ create policy "Brokers manage their own submissions" on submissions
   for all
   using (auth.uid() = broker_id)
   with check (auth.uid() = broker_id);
+
+-- Phase 8: white-labeled public page per broker (/[locale]/b/[slug]).
+-- The slug, logo, and color are looked up for anonymous visitors, but that
+-- lookup goes through the service-role client server-side (see
+-- lib/brokers.ts getPublicBrokerBySlug) rather than a public RLS policy —
+-- Postgres RLS is row-level, not column-level, and this keeps contact_email
+-- and status out of reach of the public page regardless.
+
+alter table brokers add column if not exists slug text;
+alter table brokers add column if not exists logo_url text;
+alter table brokers add column if not exists primary_color text;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'brokers_slug_key'
+  ) then
+    alter table brokers add constraint brokers_slug_key unique (slug);
+  end if;
+end $$;

@@ -32,7 +32,7 @@ const BADGE_VARIANT: Record<string, "default" | "secondary"> = {
   "most-popular": "secondary",
 };
 
-export function ComparisonForm() {
+export function ComparisonForm({ brokerId }: { brokerId?: string } = {}) {
   const t = useTranslations();
   const locale = useLocale();
   const [postcode, setPostcode] = useState("");
@@ -266,6 +266,7 @@ export function ComparisonForm() {
                     options={result.options}
                     deductible={Number(deductible)}
                     locale={locale}
+                    brokerId={brokerId}
                     onCancel={() => setSwitchRequested(false)}
                   />
                 ) : (

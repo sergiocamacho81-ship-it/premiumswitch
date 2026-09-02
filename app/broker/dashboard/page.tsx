@@ -1,18 +1,25 @@
+import { headers } from "next/headers";
 import { NextIntlClientProvider } from "next-intl";
 import { getCurrentBroker } from "@/lib/brokers";
 import { listSubmissionsForBroker } from "@/lib/submissions";
 import { SubmissionsTable } from "@/components/submissions-table";
 import { LogoutButton } from "@/components/broker/logout-button";
+import { BrandingSettings } from "@/components/broker/branding-settings";
 import { ComparisonForm } from "@/components/comparison-form";
 import enMessages from "@/messages/en.json";
 
 export const dynamic = "force-dynamic";
 
 export default async function BrokerDashboardPage() {
-  const [broker, submissions] = await Promise.all([
+  const [broker, submissions, headersList] = await Promise.all([
     getCurrentBroker(),
     listSubmissionsForBroker(),
+    headers(),
   ]);
+
+  const host = headersList.get("host") ?? "localhost:3000";
+  const protocol = host.startsWith("localhost") ? "http" : "https";
+  const publicUrlBase = `${protocol}://${host}/en`;
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-12">
@@ -29,9 +36,18 @@ export default async function BrokerDashboardPage() {
       </div>
 
       <section className="mb-12">
+        <BrandingSettings
+          initialSlug={broker?.slug ?? ""}
+          initialLogoUrl={broker?.logoUrl ?? ""}
+          initialColor={broker?.primaryColor ?? ""}
+          publicUrlBase={publicUrlBase}
+        />
+      </section>
+
+      <section className="mb-12">
         <h2 className="mb-4 text-lg font-semibold">Compare a client&apos;s premium</h2>
         <NextIntlClientProvider locale="en" messages={enMessages}>
-          <ComparisonForm />
+          <ComparisonForm brokerId={broker?.id} />
         </NextIntlClientProvider>
       </section>
 

@@ -80,5 +80,8 @@
     "missingPremium": "Impossible de déterminer le plan sélectionné.",
     "invalidDeductible": "Franchise invalide.",
     "generic": "Une erreur s''est produite. Veuillez réessayer."
+  },
+  "brokerPage": {
+    "tagline": "Comparaison d''assurance maladie par {company}"
   }
 }

@@ -80,5 +80,8 @@
     "missingPremium": "Couldn''t determine the selected plan.",
     "invalidDeductible": "Invalid deductible.",
     "generic": "Something went wrong. Please try again."
+  },
+  "brokerPage": {
+    "tagline": "Health insurance comparison by {company}"
   }
 }

@@ -80,5 +80,8 @@
     "missingPremium": "Der Plan konnte nicht ermittelt werden.",
     "invalidDeductible": "Ungültige Franchise.",
     "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+  },
+  "brokerPage": {
+    "tagline": "Krankenkassenvergleich von {company}"
   }
 }

@@ -17,7 +17,12 @@ const csp = [
   // Radix UI (via shadcn's Select) sets inline `style` attributes for
   // positioning popovers, which CSP's style-src also governs.
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data:",
+  // https: (any host) is intentionally broader than the rest of this policy:
+  // white-labeled broker pages (Phase 8) show a broker-supplied logo URL,
+  // which can be hosted anywhere. Images can't execute script or exfiltrate
+  // data the way a script-src/connect-src relaxation could, so this is a
+  // low-risk way to support that without proxying/caching logos ourselves.
+  "img-src 'self' data: https:",
   "font-src 'self' data:",
   "connect-src 'self'",
   "frame-ancestors 'none'",

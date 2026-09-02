@@ -75,10 +75,36 @@ Auth) is a single broker's own view, enforced at the database level via RLS
 (`broker_id = auth.uid()`) — even a bug in the application code couldn't leak
 one broker's submissions to another, because Postgres itself denies the query.
 
-Not yet built (later phases): white-labeled public pages tied to a specific
-broker's branding (Phase 8), client/portfolio management beyond one-off
+Not yet built (later phases): client/portfolio management beyond one-off
 submissions (Phase 9), and subscription billing gating dashboard access
 (Phase 10 — the `brokers.status` column already exists for this).
+
+## White-labeled broker pages (Phase 8)
+
+Every broker gets a public page at `/[locale]/b/[slug]` — same comparison
+tool and switch-request flow as the main site, in all four languages, but
+branded: their company name or logo instead of generic copy, and their own
+accent color if they've set one (a hex color, converted server-side to the
+`H S% L%` triplet the CSS variables use — invalid input just fails to apply
+rather than being trusted as raw CSS). A broker manages their slug, logo
+URL, and color from a "Your public page" panel on `/broker/dashboard`
+(`PATCH /api/broker/profile`, RLS-scoped to their own row).
+
+Submissions from a broker's public page are attributed to them without the
+visitor ever being authenticated: the page resolves the broker server-side
+by slug, passes that broker's id down through `ComparisonForm` →
+`SwitchRequestForm` → `POST /api/switch-request`, which re-validates the id
+actually names a real broker before attaching it — a tampered value is
+simply ignored (treated as a direct, unattributed submission) rather than
+trusted outright.
+
+Slugs are generated from the company name at signup (`alpine-brokers`,
+`alpine-brokers-2` if taken, etc.) and editable afterward. Logos are
+broker-supplied URLs rather than uploads — simpler than building file
+storage for an MVP — which is why `img-src` in the CSP allows any `https:`
+source rather than just `'self'`; images can't execute script the way a
+script-src/connect-src relaxation could, so this is a low-risk way to
+support arbitrary logo hosts without proxying or storing them ourselves.
 
 **Before real brokers sign up**: Supabase requires email confirmation by
 default, and its shared built-in email service has a very low send rate
@@ -181,3 +207,20 @@ conditions or government IDs, just name/address/contact/insurer choice):
   `/broker/login`; active session → `/broker/login` redirects to
   `/broker/dashboard`. Logout verified to actually invalidate the session
   (confirmed the same cookies that worked before logout get redirected after).
+- White-labeled pages (Phase 8): visited a test broker's public page with a
+  custom brand color and confirmed it actually re-themed the buttons/badges
+  (not just the tagline); submitted a switch-request as an anonymous visitor
+  (no session at all) and confirmed it landed with the correct `broker_id` —
+  both in the platform's Supabase row and in that broker's own dashboard;
+  confirmed a tampered/nonexistent broker id in the request body is silently
+  dropped (submission still succeeds, just unattributed) rather than trusted;
+  edited the slug and color from the dashboard and confirmed the new slug
+  serves the update and (after a real bug fix — see below) the old slug
+  properly 404s instead of serving stale data.
+- **Bug caught while testing**: the broker public page was missing
+  `export const dynamic = "force-dynamic"`, so Next.js's default fetch
+  caching (which also wraps `@supabase/supabase-js`'s internal fetch calls)
+  cached the broker-by-slug lookup indefinitely — after changing a slug, the
+  old URL kept serving the pre-change broker data instead of 404ing. Fixed
+  and re-verified live (confirmed with a full dev-server restart, since
+  Next.js dev mode doesn't always hot-reload a route-segment config change).
